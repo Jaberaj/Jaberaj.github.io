@@ -1,0 +1,29 @@
+---
+title: Important Physician Traits
+author: Adnan Jaber
+date: '2020-12-11'
+slug: important-physician-traits
+categories: [Medicine]
+tags: []
+description: '
+'
+---
+
+![](/2020-12-11-important-physician-traits/index_files/stethoscope-cartoon.png)
+
+
+Patient advocacy and cultural awareness are integral parts of medical training. Physicians are the caretakers of patients, and I strongly believe they should be their strongest advocates. Oftentimes physicians are criticized for not listening to their patients, being apathetic, and magisterial. Time after time, I hear these criticisms from friends and family about their terrible experiences with physicians, leaving them belittled rather than reassured. As a physician, I aspire to improve patient-physician interactions and advocate for a patient focused practice. 
+
+In order to be a patient advocate, a physician must be able to understand the perspective, culture, and beliefs of their patient. A culturally aware physician is the best suited to treat patients, and will best understand what advocacy is needed. 
+
+Integration of cultural awareness and patient advocacy with medical education should be mandatory; taking an active role in developing skills in both is incumbent upon every doctor in training. I strongly believe that these are the key ingredients for successful patient care.
+
+
+#Unreleated plug--> Check out my Project  [Link to project 1](/projects/project1/)
+
+[Link to google](https://www.google.com)
+```{r}
+library(emojifont)
+emoji(search_emoji('smile'))
+```
+

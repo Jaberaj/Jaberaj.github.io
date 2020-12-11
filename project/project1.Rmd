@@ -1,0 +1,226 @@
+---
+title: "Project 1, SDS348 Fall 2020"
+author: "Adnan Jaber, amj3496"
+date: "October 18, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+
+library(dplyr)
+library(ggplot2)
+library(ggrepel)
+library(tidyr)
+library(tidyverse)
+
+co2emissions <- read_csv("co2_emissions_tonnes_per_person.csv")
+
+avgincome<- read_csv("income_per_person_gdppercapita_ppp_inflation_adjusted.csv")
+
+avgenergyuse <- read_csv("energy_use_per_person.csv")
+
+
+
+
+head(avgincome)
+head(co2emissions)
+head(avgenergyuse)
+
+
+```
+
+##Introduction: I've chosen three datasets for my project and found these datasets through 'gapminder.com'. One that has the average CO2 emissions per person (in tonnes) by country and year, one that had the average income per person (in international dollars) by country and year, and another that had the average total energy consumption per person by country and year. I chose these datasets due to my curiosity about the impact richer countries have on global emissions and I thought it would be interesting to look at the correlation between energy consumption and capital as well. I believe to see a positive correlation between income per person and CO2 emissions because I believe that people with more money have access to things that emit more CO2. I also believe that there will be a positive correation between income and energy consumption.
+
+
+
+#Tidying my data:
+```{r}
+#My datasets were not tidy so I tidyed them before joining them
+
+avgincomes <- avgincome %>% pivot_longer(c(2:242), names_to = "year", values_to= "avg income per person")
+head(avgincomes)
+avgco2<- co2emissions
+avgCO2use<- avgco2 %>% pivot_longer(c(2:220), names_to = "year", values_to= "avg co2 consumption per person")
+head(avgCO2use)
+averageEnergyUSE <- avgenergyuse %>% pivot_longer(c(2:57), names_to = "year", values_to= "avg energy consumption per person")
+#These pivot longer functions allow year to be a column rather than a row for each data set. This makes the data easier to work with.
+head(averageEnergyUSE)
+
+#I joined my data in two steps, I used left join both times because I wanted to match all the data sets based on "country" and "year
+joiningpt1 <- left_join(avgCO2use, avgincomes, by=c("country", "year"))
+head(joiningpt1)
+
+totaldata <- left_join(joiningpt1, averageEnergyUSE, by=c("country", "year"))
+totaldata <- left_join(joiningpt1, averageEnergyUSE, by=c("country", "year"))
+head(totaldata)
+```
+#Making my data nice to work with:
+```{r}
+totaldata %>% summarize_all(funs(sum(is.na(.))))
+noNAtotaldata <- na.omit(totaldata)
+```
+#I wanted to get the number of NAs per column because the datasets did not align very well by year. There were 24009 NAs for "avg co2 consumption per person", 219 NAs for "avg income per person", and 36128 NAs for "avg energy consumption per person" & decided to make a new data set without NAs
+
+
+
+#From this dataset without NAs I decided to get the mean "avg energy consumption per person", "avg co2 emission per person", and "avg income per person" by country for all time (data fom every year is averaged together)
+```{R}
+totalaverages <- noNAtotaldata%>%group_by(country)%>% summarise_at(vars(-year), funs(mean(., na.rm=TRUE)))
+
+head(totalaverages)
+
+
+
+#I decided that I wanted to make every column of data on similar scales, so I made each one into a percentile with 100 being the country that had the highest value in each column. I then removed the non-percentile columns.
+totalpercentiles <- totalaverages %>% mutate('co2_pctile' = ntile(`avg co2 consumption per person`, 100)) %>% mutate('income_pctile' = ntile(`avg income per person`, 100)) %>% mutate('energyuse_pctile' = ntile(`avg energy consumption per person`, 100)) %>% select(-"avg co2 consumption per person") %>% select(-"avg income per person") %>% select(-"avg energy consumption per person")
+
+head(totalpercentiles) 
+```
+
+#Exploring my data:
+```{R}
+#I grouped my data by country and arranged it in descending order of "co2_pctile" so I could get a quick idea about if my predictions at the beginning of my project were correct or not. From a quick look, it would appear as if they were (ex:Qatar is in the 100th percentile for avg income per person, avg energy use per person, and avg co2 emissions per person)
+totalpercentiles %>% group_by(country) %>% arrange(desc(co2_pctile)) %>% head()
+
+#I wanted to get an idea of where the United States ranks (which percentile) in each of the categories  
+totalpercentiles %>% filter(country== "United States")
+
+
+noNAdataframe<- data.frame(noNAtotaldata)
+```
+#I was curious about the number of years that the U.S. had recorded data for. From this I found that the U.S. had data recorded for 56 years after removing all NAs from our dataset.
+```{R}
+noNAdataframe %>% group_by(country=="United States") %>% summarise(n())
+
+
+datasummary <- noNAdataframe %>% group_by(country) %>% summarize(mean_co2emission=mean(avg.co2.consumption.per.person), mean_income=mean(avg.income.per.person), mean_energyuse= mean(avg.energy.consumption.per.person),sd_co2emission=sd(avg.co2.consumption.per.person), sd_income=sd(avg.income.per.person), sd_energyuse= sd(avg.energy.consumption.per.person))
+
+#The standard deviation columns give us the average standard deviation for each category, from all recorded years per country. 
+
+head(datasummary)
+
+```
+#I wanted to get some summary stats about the mean and standard deviations for co2 emissions, incomes, and energy use world-wide. From this I found that the world wide average co2 emissions per person per year, averaged from all recorded years, is 4.96425 tonnes, the world wide average income per person per year, averaged from all recorded years, is 14252.3 international dollars, and that the world wide average energy use per person per year, averaged from all recorded years, is 1867.6 units.
+```{R}
+ 
+datasummary %>% summary()
+#I then filtered out the United States so I could compare our country to the world wide averages.
+datasummary %>% filter(country=="United States")
+19.40714/4.96425 #CO2 Emissions
+35419.64/14252.3  #Income
+7421.25/1867.6  #Energy Use
+```
+#From this we see that the US has an average all time CO2 emission per person per year that is 3.90938 times greater than the world-wide average,an average all time income per person per year that is 2.485188 times greater than the world-wide average, and an average all energy use per person per year that is 3.973683 times greater than the world-wide average. 
+
+
+#From our "totalpercentiles" data set we already know that the US is in the 93rd percentile for all time CO2 emissions per person, 90th percentile for all time income per person, and 94th percentile for energy use per person.
+```{R}
+totalpercentiles %>% filter(country== "United States")
+
+#I was then curious about the difference between the averaged overall mean for each category compared to the median mean of each category
+datasummary  %>% summarise(median(mean_income), mean(mean_income), median(mean_co2emission), mean(mean_co2emission), median(mean_energyuse), mean(mean_energyuse))
+```
+#I found that the overall mean of each category was nearly double for the median of each category. This tells us that some countries hav avg co2 emissions, avg incomes, and avg energy use per person, that are much greater than most other countries in the world.
+
+
+#I then wanted to get the SDs for each column of CO2 Emissions, Income, and Energy Use.
+```{R}
+datasummary %>% summarise(sd(mean_co2emission), sd(mean_income), sd(mean_energyuse)) 
+```
+#I found the sd between each country's overall mean co2 emissions per person to be 6.792879, the sd between each country's overall mean income per person to be 17174.02, and the sd between each country's overall energy use per person to be 17174.02
+#I was then interested in comparing the countries with the max mean and min mean for each of the categories. (returned to 'datasummary' dataset in order to do my comparison in units rather than percentiles)
+```{R}
+datasummary  %>% filter(mean_co2emission== max(mean_co2emission))  
+datasummary  %>% filter(mean_co2emission== min(mean_co2emission))
+datasummary  %>% filter(mean_income== max(mean_income))  
+datasummary  %>% filter(mean_income== min(mean_income))
+datasummary  %>% filter(mean_energyuse== max(mean_energyuse))  
+datasummary  %>% filter(mean_energyuse== min(mean_energyuse))
+```
+#I found that the country with the max all time mean co2emission per person per year is Qatar, the country with the min all time mean co2emission per person per year is Ethiopia, the country with the max all time mean income per person per year is Qatar, the country with the min all time mean income per person per year is Mozambique, the country with the max all time energy use per person per year is Qatar, and that the country with the min all time energy use per person per year is Lesotho.
+
+
+##Quick look at the correlations between numeric variables:
+```{R}
+
+datasummary %>%summarize(cor(mean_co2emission, mean_energyuse, use="pair"))
+datasummary %>%summarize(cor(mean_co2emission, mean_income, use="pair"))
+datasummary %>%summarize(cor(mean_income, mean_energyuse, use="pair"))
+#I first looked at these correlations, because I was not super interested in my "SD" variables. I found that they each had strong positive correlations with one another.
+
+cormatrix <- datasummary %>% select_if(is.numeric) %>% cor(use="pair")
+
+tidymatrix <- cormatrix  %>% as.data.frame %>% rownames_to_column("var1") %>%
+pivot_longer(-1,names_to="var2",values_to="correlation")
+```
+
+#Plot 1, Correlation Heat Map: 
+
+#From my correlation heat map you can see that when any one numeric variable is paired with any other given numeric variable, there is a strong, positive correlation between the two. This tells us that when one thing increase, the other does as well, generally. What our "sd" variables tell us, is that the countries that have the highest overall mean co2 emission, energy use, and income, also saw great jumps in these categories from year to year, or from there lowest to highest points. 
+```{r}
+tidymatrix %>% ggplot(aes(var1,var2,fill=correlation)) +geom_tile() +scale_fill_gradient2(low="red",mid="white",high="blue") +geom_text(aes(label=round(correlation,2)),color = "black", size = 4) +theme(axis.text.x = element_text(angle = 90, hjust=1)) + coord_fixed()
+
+```
+
+#Plot 2: 
+
+#In this scatterplot below, I wanted to compare average income per person and average CO2 emissions per person and felt as if the best way to do that would be as percentiles. This plot shows that a country that is at a higher percentile in income per person, will most likely be at a higher percentile in CO2 emissions per person. I added a best fit line to show the strength of the relationship.
+```{r}
+
+ggplot(data = totalpercentiles, aes(x = income_pctile, y = co2_pctile, color=country)) + geom_point() + scale_x_continuous(breaks = seq(0,100,by = 5)) + ggtitle("Income Percentile vs CO2 Emission Percentile by Country")  + labs(y="Avg CO2 Emission Per Person by Country(Percentile)", x = "Avg Income Per Person by Country(Percentile)") + theme(legend.position = "none") + geom_smooth(aes(group = 1), size = 2, method = "lm", se = FALSE) 
+ 
+```
+
+#Plot 3: 
+
+#Below, I made a bar plot that shows the world wide average CO2 emissions per person by year to show the way that the emissions have changed year to year. I also included a backdrop behind the bar plots of the points, by country that make up this data. There are easily noticable outliers much greater than the world wide average. Due to this, I was required to adjust the Y-axis to make the bars more visible. 
+```{r}
+
+ggplot(noNAdataframe, aes(year,avg.co2.consumption.per.person, fill=year)) + geom_point(aes(fill=country), shape=".", color="darkblue")+ geom_bar(stat="summary", aes(year,avg.co2.consumption.per.person), fun = "mean") + geom_errorbar(stat="summary", width= .2) + xlim(1960,2015) + ylim(0,10)+ scale_x_discrete(breaks = seq(1960, 2015,by = 10))+labs(y="Avg CO2 Emission Per Person (Tonnes)", x = "Year")+ theme_light() + theme(legend.position = "none") + ggtitle("Change in Avg CO2 Emission per Person (Worldwide) Over Time")  
+
+```
+
+
+#PCA:
+
+```{r}
+#For this I scaled my data and rid it of unwanted variables.
+PCdata<- datasummary %>% select(-c(country, sd_co2emission, sd_income, sd_energyuse)) %>% scale() %>%prcomp()
+#Allows us to see the variance each pc is responsible for
+PCdata
+
+#I then performed PCA by giving a correlation matrix to eigen
+eig1 <- datasummary %>% select(-c(country, sd_co2emission, sd_income, sd_energyuse)) %>% cor() %>% eigen()
+#Allows us to see the eigen values and makes a matrix
+eig1
+#Looked at the variance in my data that each PC is responsible for
+summary(PCdata)
+
+datasummary %>% select(mean_co2emission, mean_income, mean_energyuse) %>% cor
+
+
+```
+#We saw that PC one was responsible for 93.16% of the variance and PC2 for 5.4% of the variance. For this reason, I choose these two to make my visualizations (only really needed PC1 but multiple makes the visualizations more satisfying)
+
+#PCA Visualizations: 
+
+#The plot shows that PC1 is good at explaining all of the variables, while PC2 is only good at explaining mean income. 
+```{r}
+PCdata$rotation[,1:2]%>%as.data.frame%>%rownames_to_column%>%ggplot()+geom_hline(aes(yintercept=0),lty=2)+ geom_vline(aes(xintercept=0),lty=2)+ylab("PC2")+xlab("PC1")+
+geom_segment(aes(x=0,y=0,xend=PC1,yend=PC2),arrow=arrow(),col="red")+
+geom_label(aes(x=PC1*1.1,y=PC2*1.1,label=rowname))
+
+
+```
+
+

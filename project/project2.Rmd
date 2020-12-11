@@ -1,0 +1,337 @@
+---
+title: "SDS348 Project 2"
+author: "Adnan Jaber (amj3496)"
+date: "November 22, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r, include=FALSE}
+
+library(lmtest)
+library(sandwich)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(tidyr)
+library(plotROC)
+library(readr)
+library(vegan)
+library(glmnet)
+
+```
+
+```{r}
+
+#Class diags function
+
+class_diag<-function(probs,truth){
+  
+  tab<-table(factor(probs>.5,levels=c("FALSE","TRUE")),truth)
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+
+  if(is.numeric(truth)==FALSE & is.logical(truth)==FALSE) truth<-as.numeric(truth)-1
+  
+  #CALCULATE EXACT AUC
+  ord<-order(probs, decreasing=TRUE)
+  probs <- probs[ord]; truth <- truth[ord]
+  
+  TPR=cumsum(truth)/max(1,sum(truth)) 
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  
+  dup<-c(probs[-1]>=probs[-length(probs)], FALSE)
+  TPR<-c(0,TPR[!dup],1); FPR<-c(0,FPR[!dup],1)
+  
+  n <- length(TPR)
+  auc<- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+
+  data.frame(acc,sens,spec,ppv,auc)
+}
+
+```
+
+#####Introduction:
+#####The dataset I have chosen will is from 'https://datahub.io/machine-learning/diabetes#resource-diabetes'. This dataset analyzes diabetes predictors in Pima Indian women. There are 8 numeric variables and one binary variable within this data set. The numeric variables are "number.of.times.pregnant," "plasma.glucose.concentration," "diastolic.blood.pressure(mmHg)," "tricep.skin.fold.thickness(mm)," "serum.insulin(mu.U/mL)," "BMI(kg/m^2)," "diabetes.pedigree.function," and "age(yrs)." The binary variable is "diagnosis." I plan to make a categorical variable from the "BMI" variable, where I will make 3 discrete groups; "underweight," "healthy," and "overweight." What each variable is measuring is what it is named after.There are 768 observations. 
+
+#PART 1
+```{r}
+
+diabetes <- read.csv("diabetes_csv.csv")
+
+#Making Categorical variable from bmi
+diabetes <- diabetes %>% mutate(categoricalBMI = cut(BMI.kg.m.2., breaks = c(-Inf, 18.5, 25, Inf), labels=c("underweight","healthy","overweight")))
+
+
+
+#MANOVA across categorical BMI
+man1 <-  manova(cbind(number.of.times.pregnant, plasma.glucose.concentration, diastolic.blood.pressure.mmHg., tricep.skin.fold.thickness.mm., serum.insulin.mu.U.mL., diabetes.pedigree.function, age.yrs.)~categoricalBMI, data=diabetes)
+
+summary(man1) #significant
+
+#Univariate ANOVA
+summary.aov(man1)
+#'Serum insulin level,' 'tricep skin fold thickness,' 'diastolic blood pressure,' and 'plasma glucose concentration' are all significant and show mean difference across categorical BMI groups.
+
+
+#Post-hoc t tests
+pairwise.t.test(diabetes$serum.insulin.mu.U.mL.,diabetes$categoricalBMI, p.adj="none")
+pairwise.t.test(diabetes$tricep.skin.fold.thickness.mm.,diabetes$categoricalBMI, p.adj="none")
+pairwise.t.test(diabetes$diastolic.blood.pressure.mmHg.,diabetes$categoricalBMI, p.adj="none")
+pairwise.t.test(diabetes$plasma.glucose.concentration,diabetes$categoricalBMI, p.adj="none")
+
+24 + 6+1 #1 manova, 6 anova, and 24 t tests performed
+
+#At least one type 1 error
+1-(1-.05)^31
+
+#Bonferroni correction
+0.05/31
+
+#Assumptions
+diabetes1 <- diabetes%>%select(number.of.times.pregnant, plasma.glucose.concentration, diastolic.blood.pressure.mmHg., tricep.skin.fold.thickness.mm., serum.insulin.mu.U.mL., diabetes.pedigree.function, age.yrs., categoricalBMI)
+
+ggplot(diabetes1, aes(x = serum.insulin.mu.U.mL., y = diastolic.blood.pressure.mmHg.)) +
+ geom_point(alpha = .5) + geom_density_2d(h=2) + coord_fixed() + facet_wrap(~categoricalBMI)
+
+covmats<-diabetes1%>%group_by(categoricalBMI)%>%do(covs=cov(.[2:5]))
+for(i in 1:5){print(covmats$covs[i])}
+
+
+
+```
+I performed 1 manova, 6 anova, and 24 t-tests,so we performed 31 tests total. The manova test was significant and showed that some of my numeric variables show a mean difference across one or more of the categories in the categoricalBMI variable. We then performed 6 univariate anova tests to find that 'Serum insulin level,' 'tricep skin fold thickness,' 'diastolic blood pressure,' and 'plasma glucose concentration' are all significant and show mean difference across categorical BMI groups. We calculated the bonferroni correction to be .001612 and the chance of at least one type one error to be .7961. Assumptions are likely met because the matrices dont show  homogeneity of (co)variances.
+
+#PART 2
+```{r, message=FALSE}
+
+#PERMANOVA (randimization-test MANOVA)
+dists<-diabetes%>%select(number.of.times.pregnant, plasma.glucose.concentration, diastolic.blood.pressure.mmHg., tricep.skin.fold.thickness.mm., serum.insulin.mu.U.mL., diabetes.pedigree.function, age.yrs.)%>%dist()
+
+adonis(dists~categoricalBMI, data=diabetes)
+
+#Permanova by hand (done in order to graph)
+SST<- sum(dists^2)/150
+SSW<-diabetes%>%group_by(categoricalBMI)%>%select(number.of.times.pregnant, plasma.glucose.concentration, diastolic.blood.pressure.mmHg., tricep.skin.fold.thickness.mm., serum.insulin.mu.U.mL., diabetes.pedigree.function, age.yrs., categoricalBMI)%>% do(d=dist(.[2:3],"euclidean"))%>%ungroup()%>% summarize(sum(d[[1]]^2)/50 + sum(d[[2]]^2)/50+ sum(d[[3]]^2)/50)%>%pull
+F_obs<-((SST-SSW)/2)/(SSW/147)
+
+Fs<-replicate(1000,{
+new<-diabetes%>%mutate(categoricalBMI=sample(categoricalBMI)) #permute the categoricalBMI vector
+SSW<-new%>%group_by(categoricalBMI)%>%select(number.of.times.pregnant, plasma.glucose.concentration, diastolic.blood.pressure.mmHg., tricep.skin.fold.thickness.mm., serum.insulin.mu.U.mL., diabetes.pedigree.function, age.yrs., categoricalBMI)%>%
+do(d=dist(.[2:3],"euclidean"))%>%ungroup()%>%
+summarize(sum(d[[1]]^2)/50 + sum(d[[2]]^2)/50+ sum(d[[3]]^2)/50)%>%pull
+((SST-SSW)/2)/(SSW/147) #calculate new F ratio on randomized data
+})
+
+#histogram of null distribution and p-value
+{hist(Fs,prob = T); abline(v=F_obs, col="red", add=T)}
+
+
+#p-value
+mean(Fs>F_obs)
+
+```
+The null hypothesis for my permanova test is: The group means for the number.of.times.pregnant, plasma.glucose.concentration, diastolic.blood.pressure.mmHg., tricep.skin.fold.thickness.mm., serum.insulin.mu.U.mL., diabetes.pedigree.function, and age.yrs. variables are equal across the different the categorical BMI groups. 
+
+The alternative hypothesis for my permanova test is: The group means for at least any one of these variables: number.of.times.pregnant, plasma.glucose.concentration, diastolic.blood.pressure.mmHg., tricep.skin.fold.thickness.mm., serum.insulin.mu.U.mL., diabetes.pedigree.function, and age.yrs. variables are different across the different categorical BMI groups.  
+
+Interpretation: Because our p-value (.042) is less then alpha (.05) we reject the null hypothesis. There is a difference in mean values in at least one of the variables across the different categorical BMI groups. 
+
+#PART 3
+```{r}
+#Predicting diastolic blood pressure from diabetes diagnosis and plasma glucose concentration 
+
+#Dummy coding diagnosis
+diabetes2 <- diabetes %>% mutate(diagnosis=ifelse(diabetes$diagnosis=="tested_positive", 1,0))
+
+#Rename to make easier
+diabetes2 <-diabetes2 %>% mutate(BP = diastolic.blood.pressure.mmHg., na.rm=T)
+#Mean Center
+diabetes2 <-diabetes2 %>% mutate(centeredGlucose = plasma.glucose.concentration - mean(plasma.glucose.concentration, na.rm=T))
+
+#Linear Regression
+fit <- lm(BP~diagnosis+centeredGlucose+diagnosis*centeredGlucose, data=diabetes2)
+summary(fit)
+
+#Regression plot
+ggplot(diabetes2, aes(x=centeredGlucose, y=BP,group=diagnosis))+geom_point(aes(color=diagnosis))+geom_smooth(method="lm",formula=y~1,se=F,fullrange=T,aes(color=diagnosis))+
+theme(legend.position=c(.1,.1))+xlab("Centered Glucose")+ ylab("diastolic BP")
+
+#Linearity, Homoskedsaticity (Assumption)
+resids<-fit$residuals
+fitvals<-fit$fitted.values
+ggplot()+geom_point(aes(fitvals,resids))+geom_hline(yintercept=0, color='red')
+
+
+#Normality (Assumption)
+ggplot()+geom_histogram(aes(resids), bins=20)
+                        ggplot()+geom_qq(aes(sample=resids))+geom_qq_line(aes(sample=resids, color='red'))
+                        
+#Robust Standard Errors
+bptest(fit)
+
+  #uncorrected SEs
+summary(fit)$coef[,1:2]
+
+  #Corrected SEs
+coeftest(fit, vcov = vcovHC(fit))[,1:2]
+```
+
+Linear Regression coefficent interpretation: For Pima Indian women the average diastolic blood pressure is 69.638 mmHg for women who tested negative for diabetes and have average glucose plasma levels. Controlling for their glucose levels, there is a difference of .24531 mmHg in the diastolic BP of women with and without diabetes. When controlling for diabetes diagnosis, for every 1 increase in glucose plasma levels, diastolic blood pressure increases by .13322. There is no significant interaction between diabetes status and centered glucose level. 
+
+Due to the fanning pattern on our Residual-Fitted.value plot, it looks like the assumption for linearity & homoskedsaticity are not met. The other plots show that normality looks good for the most part but is not met due to some extreme outliers.
+
+After correcting the standard errors, the error for the intercept, centered glucose plasma level, and interaction between diagnosis and centered glucose level all decreased. However, the error for the diabetes diagnosis increased. My model explains 2.35% (adjusted r^2 value from regression) of the variation betweem the corrected and uncorrected SEs. 
+
+#PART 4
+```{r}
+boot_dat<- sample_frac(diabetes2, replace=T)
+
+samp_distn<-replicate(5000, {
+boot_dat <- sample_frac(diabetes2, replace=T) 
+fit <- lm(BP~diagnosis+centeredGlucose+diagnosis*centeredGlucose, data=boot_dat) 
+coef(fit) 
+})
+
+#Estimated SEs 
+samp_distn %>% t %>% as.data.frame %>% summarize_all(sd)
+
+```
+The bootstrapped SEs are roughly equivalent to the corrected SEs. For all of the bootstrapped SEs except for the diagnosis, they are less than the uncorrected SEs. For areas where the SE decreases, the t-value will increase and the p-value will decrease. Opposite for increasing.  
+
+
+#PART 5
+```{r}
+#Binary regression
+binaryfit<-glm(diagnosis~age.yrs.+BMI.kg.m.2.+BP, data=diabetes2, family="binomial")
+coeftest(binaryfit)
+exp(coef(binaryfit))%>%data.frame()
+
+#Confusion Matrix
+prob <- predict(binaryfit, type="response")
+table(truth=diabetes2$diagnosis, prediction=as.numeric(prob>.5))%>%addmargins
+
+(427+90)/768 #accuracy
+90/268 #Sensitivity 
+427/500 #Specificity
+90/163 #Precision 
+
+#Density Plot
+diabetes2$logit<-predict(binaryfit)
+
+
+ggplot(diabetes2, aes(x=logit, group=diagnosis, fill=diagnosis))+geom_density(alpha=0.3) + geom_vline(xintercept=0, lty=2) #diagnosis=1=positive for diabetes, 0=negative
+
+#ROC Plot and AUC'
+
+diabetes2 <- diabetes2%>%mutate(prediction=ifelse(prob>.5,1,0))
+
+classify<-diabetes2%>%transmute(prob,prediction,truth=diagnosis)
+
+ROCplot<-ggplot(classify)+geom_roc(aes(d=truth,m=prob), n.cuts=0)
+ROCplot
+calc_auc(ROCplot)
+```
+Coefficient estimate interpretation: The odds of having diabetes at age 0, 0 BMI, and 0 BP is .006278. Holding other variables constant, an increase in age by 1 multiplies the odds of having diabetes by 1.0502968. Doing the same for BMI multiplies the odds by 1.10947. Lastly, an increase in diastolic blood pressure by 1 multiplies the odds of having diabetes by .99. This model is 67.3% accurate. It is able to predict 33.58% (sensitivity) out of total positive cases. It is able to predict 85.4% of the negatives. (Precision) 55.2% of the predicted positives are truly positive. 
+
+Our calculated AUC was .7381567 which is considered fair. AUC summarizes the sensitivity and specificity into a single value. So our model is a fair predictor of diabetes diagnosis. 
+
+#PART 6
+```{r}
+binaryfit2<-glm(diagnosis~age.yrs.+BMI.kg.m.2.+BP+number.of.times.pregnant+plasma.glucose.concentration+tricep.skin.fold.thickness.mm.+serum.insulin.mu.U.mL.+diabetes.pedigree.function, data=diabetes2, family="binomial")
+coeftest(binaryfit2)
+exp(coef(binaryfit2))%>%data.frame()
+
+#Confusion Matrix
+prob1 <- predict(binaryfit2, type="response")
+table(truth=diabetes2$diagnosis, prediction=as.numeric(prob>.5))%>%addmargins
+
+(445+156)/768 #accuracy
+156/268 #Sensitivity
+445/500 #Specificity 
+156/211 #Precision 
+#AUC
+diabetes2 <- diabetes2%>%mutate(prediction=ifelse(prob1>.5,1,0))
+
+classify<-diabetes2%>%transmute(prob,prediction,truth=diagnosis)
+
+ROCplot1<-ggplot(classify)+geom_roc(aes(d=truth,m=prob), n.cuts=0)
+ROCplot1
+calc_auc(ROCplot1)
+
+
+#10-fold CV
+set.seed(1234)
+k=10
+
+data<-diabetes2[sample(nrow(diabetes2)),]
+folds<-cut(seq(1:nrow(diabetes2)),breaks=k,labels=F)
+
+diags<-NULL
+for(i in 1:k){
+ train<-data[folds!=i,]
+ test<-data[folds==i,]
+ truth<-test$diagnosis
+ train_fit<-glm(diagnosis~age.yrs.+BMI.kg.m.2.+BP+number.of.times.pregnant+plasma.glucose.concentration+tricep.skin.fold.thickness.mm.+serum.insulin.mu.U.mL.+diabetes.pedigree.function, data=train, family="binomial")
+ probs<-predict(train_fit,newdata = test,type="response")
+ diags<-rbind(diags,class_diag(probs,truth))
+}
+
+apply(diags, 2, mean, na.rm = TRUE)
+
+#Lasso
+Lassofit<-glm(diagnosis~ -1 + age.yrs.+BMI.kg.m.2.+BP+number.of.times.pregnant+plasma.glucose.concentration+tricep.skin.fold.thickness.mm.+serum.insulin.mu.U.mL.+diabetes.pedigree.function, data=diabetes2, family="binomial")
+
+y<-as.matrix(diabetes2$diagnosis)
+x<-model.matrix(Lassofit)
+x<-scale(x)
+cv<-cv.glmnet(x,y, family='binomial')
+lasso<-glmnet(x,y,family="binomial",lambda=cv$lambda.1se)
+coef(cv)
+
+prob2 <- predict(Lassofit, type="response")
+
+class_diag(prob2, diabetes2$diagnosis)
+
+
+#10-fold CV
+set.seed(1234)
+k=10
+
+data2<-diabetes2[sample(nrow(diabetes2)),]
+folds2<-cut(seq(1:nrow(diabetes2)),breaks=k,labels=F)
+
+diags2<-NULL
+for(i in 1:k){
+ train2<-data2[folds!=i,]
+ test2<-data2[folds==i,]
+ truth2<-test2$diagnosis
+ train_fit2<-glm(diagnosis~ -1 + age.yrs.+BMI.kg.m.2.+BP+number.of.times.pregnant+plasma.glucose.concentration+tricep.skin.fold.thickness.mm.+serum.insulin.mu.U.mL.+diabetes.pedigree.function, data=train2, family="binomial")
+ probs2<-predict(train_fit2,newdata = test2,type="response")
+ diags2<-rbind(diags2,class_diag(probs2,truth2))
+}
+
+apply(diags2, 2, mean, na.rm = TRUE)
+```
+Coeffecient interpretation: The odds of having diabetes with the rest of the variables being 0 is .00022. Holding all things constant, if age increases by 1 the odds of having diabetes increases by a factor of 1.015, if BMI increases by 1 the odds of having diabetes increases by a factor of 1.094, if BP increases by 1 the odds of having diabetes increases by a factor of .986, if number of times pregnant increases by 1 the odds of having diabetes increases by a factor of 1.13... etc. This model is 78.25% accurate. It is able to predict 58.2% (sensitivity) out of total positive cases. It is able to predict 89% of the negatives. (Precision) 73.9% of the predicted positives are truly positive. 
+
+Our calculated AUC was .8394 (increased) which is considered good. AUC summarizes the sensitivity and specificity into a single value. So our model is a good predictor of diabetes diagnosis. 
+
+The 10-fold reports were about equivalent to all of in-sample metrics. 
+
+Lasso retained BP, tricep skin fold thickness, and serum insulin level. 
+
+The AUC after Lasso was .686 and after the 10-folds it was .668. The less complex model leads to better fittings because of the slightly greater AUC. 
+
+

@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Adnan Jaber" />
+    
+    <link rel="shortcut icon" type="image/x-icon" href="../../img/favicon.ico">
+    <title>SDS348 Project 2</title>
+    <meta name="generator" content="Hugo 0.79.0" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="../../css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="../../"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="../../post/">BLOG</a></li>
+        
+        <li><a href="../../projects/">PROJECTS</a></li>
+        
+        <li><a href="../../resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="../../project/project2/">SDS348 Project 2</a></strong>
+          </h3>
+        </div>
+ 
+<div class="blog-title">
+          <h4>
+         January 1, 0001 
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+
+
+<div id="r-markdown" class="section level2">
+<h2>R Markdown</h2>
+<p>This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <a href="http://rmarkdown.rstudio.com" class="uri">http://rmarkdown.rstudio.com</a>.</p>
+<p>When you click the <strong>Knit</strong> button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:</p>
+<pre class="r"><code>#Class diags function
+
+class_diag&lt;-function(probs,truth){
+  
+  tab&lt;-table(factor(probs&gt;.5,levels=c(&quot;FALSE&quot;,&quot;TRUE&quot;)),truth)
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+
+  if(is.numeric(truth)==FALSE &amp; is.logical(truth)==FALSE) truth&lt;-as.numeric(truth)-1
+  
+  #CALCULATE EXACT AUC
+  ord&lt;-order(probs, decreasing=TRUE)
+  probs &lt;- probs[ord]; truth &lt;- truth[ord]
+  
+  TPR=cumsum(truth)/max(1,sum(truth)) 
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  
+  dup&lt;-c(probs[-1]&gt;=probs[-length(probs)], FALSE)
+  TPR&lt;-c(0,TPR[!dup],1); FPR&lt;-c(0,FPR[!dup],1)
+  
+  n &lt;- length(TPR)
+  auc&lt;- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+
+  data.frame(acc,sens,spec,ppv,auc)
+}</code></pre>
+<div id="introduction" class="section level5">
+<h5>Introduction:</h5>
+</div>
+<div id="the-dataset-i-have-chosen-will-is-from-httpsdatahub.iomachine-learningdiabetesresource-diabetes.-this-dataset-analyzes-diabetes-predictors-in-pima-indian-women.-there-are-8-numeric-variables-and-one-binary-variable-within-this-data-set.-the-numeric-variables-are-number.of.times.pregnant-plasma.glucose.concentration-diastolic.blood.pressuremmhg-tricep.skin.fold.thicknessmm-serum.insulinmu.uml-bmikgm2-diabetes.pedigree.function-and-ageyrs.-the-binary-variable-is-diagnosis.-i-plan-to-make-a-categorical-variable-from-the-bmi-variable-where-i-will-make-3-discrete-groups-underweight-healthy-and-overweight.-what-each-variable-is-measuring-is-what-it-is-named-after.there-are-768-observations." class="section level5">
+<h5>The dataset I have chosen will is from '<a href="https://datahub.io/machine-learning/diabetes#resource-diabetes" class="uri">https://datahub.io/machine-learning/diabetes#resource-diabetes</a>'. This dataset analyzes diabetes predictors in Pima Indian women. There are 8 numeric variables and one binary variable within this data set. The numeric variables are &quot;number.of.times.pregnant,&quot; &quot;plasma.glucose.concentration,&quot; &quot;diastolic.blood.pressure(mmHg),&quot; &quot;tricep.skin.fold.thickness(mm),&quot; &quot;serum.insulin(mu.U/mL),&quot; &quot;BMI(kg/m^2),&quot; &quot;diabetes.pedigree.function,&quot; and &quot;age(yrs).&quot; The binary variable is &quot;diagnosis.&quot; I plan to make a categorical variable from the &quot;BMI&quot; variable, where I will make 3 discrete groups; &quot;underweight,&quot; &quot;healthy,&quot; and &quot;overweight.&quot; What each variable is measuring is what it is named after.There are 768 observations.</h5>
+</div>
+</div>
+<div id="part-1" class="section level1">
+<h1>PART 1</h1>
+<pre class="r"><code>diabetes &lt;- read.csv(&quot;diabetes_csv.csv&quot;)
+
+#Making Categorical variable from bmi
+diabetes &lt;- diabetes %&gt;% mutate(categoricalBMI = cut(BMI.kg.m.2., breaks = c(-Inf, 18.5, 25, Inf), labels=c(&quot;underweight&quot;,&quot;healthy&quot;,&quot;overweight&quot;)))
+
+
+
+#MANOVA across categorical BMI
+man1 &lt;-  manova(cbind(number.of.times.pregnant, plasma.glucose.concentration, diastolic.blood.pressure.mmHg., tricep.skin.fold.thickness.mm., serum.insulin.mu.U.mL., diabetes.pedigree.function, age.yrs.)~categoricalBMI, data=diabetes)
+
+summary(man1) #significant</code></pre>
+<pre><code>##                 Df  Pillai approx F num Df den Df    Pr(&gt;F)    
+## categoricalBMI   2 0.16062    9.481     14   1520 &lt; 2.2e-16 ***
+## Residuals      765                                             
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>#Univariate ANOVA
+summary.aov(man1)</code></pre>
+<pre><code>##  Response number.of.times.pregnant :
+##                 Df Sum Sq Mean Sq F value Pr(&gt;F)
+## categoricalBMI   2   52.1  26.046  2.3017 0.1008
+## Residuals      765 8656.5  11.316               
+## 
+##  Response plasma.glucose.concentration :
+##                 Df Sum Sq Mean Sq F value    Pr(&gt;F)    
+## categoricalBMI   2  30895 15447.3   15.69 2.099e-07 ***
+## Residuals      765 753170   984.5                      
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+##  Response diastolic.blood.pressure.mmHg. :
+##                 Df Sum Sq Mean Sq F value    Pr(&gt;F)    
+## categoricalBMI   2  17186  8592.8  24.331 5.698e-11 ***
+## Residuals      765 270169   353.2                      
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+##  Response tricep.skin.fold.thickness.mm. :
+##                 Df Sum Sq Mean Sq F value   Pr(&gt;F)    
+## categoricalBMI   2  16942  8471.1  36.358 8.24e-16 ***
+## Residuals      765 178239   233.0                     
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+##  Response serum.insulin.mu.U.mL. :
+##                 Df  Sum Sq Mean Sq F value    Pr(&gt;F)    
+## categoricalBMI   2  258418  129209  9.9559 5.389e-05 ***
+## Residuals      765 9928247   12978                      
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+##  Response diabetes.pedigree.function :
+##                 Df Sum Sq Mean Sq F value  Pr(&gt;F)  
+## categoricalBMI   2  0.629 0.31474  2.8811 0.05668 .
+## Residuals      765 83.571 0.10924                  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+##  Response age.yrs. :
+##                 Df Sum Sq Mean Sq F value Pr(&gt;F)
+## categoricalBMI   2    550  274.95  1.9932  0.137
+## Residuals      765 105529  137.95</code></pre>
+<pre class="r"><code>#&#39;Serum insulin level,&#39; &#39;tricep skin fold thickness,&#39; &#39;diastolic blood pressure,&#39; and &#39;plasma glucose concentration&#39; are all significant and show mean difference across categorical BMI groups.
+
+
+#Post-hoc t tests
+pairwise.t.test(diabetes$serum.insulin.mu.U.mL.,diabetes$categoricalBMI, p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  diabetes$serum.insulin.mu.U.mL. and diabetes$categoricalBMI 
+## 
+##            underweight healthy
+## healthy    0.31954     -      
+## overweight 0.01062     0.00016
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(diabetes$tricep.skin.fold.thickness.mm.,diabetes$categoricalBMI, p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  diabetes$tricep.skin.fold.thickness.mm. and diabetes$categoricalBMI 
+## 
+##            underweight healthy
+## healthy    0.22        -      
+## overweight 1.7e-05     9.6e-14
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(diabetes$diastolic.blood.pressure.mmHg.,diabetes$categoricalBMI, p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  diabetes$diastolic.blood.pressure.mmHg. and diabetes$categoricalBMI 
+## 
+##            underweight healthy
+## healthy    2.8e-06     -      
+## overweight 4.8e-10     9e-04  
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(diabetes$plasma.glucose.concentration,diabetes$categoricalBMI, p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  diabetes$plasma.glucose.concentration and diabetes$categoricalBMI 
+## 
+##            underweight healthy
+## healthy    0.546       -      
+## overweight 0.008       4.9e-07
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>24 + 6+1 #1 manova, 6 anova, and 24 t tests performed</code></pre>
+<pre><code>## [1] 31</code></pre>
+<pre class="r"><code>#At least one type 1 error
+1-(1-.05)^31</code></pre>
+<pre><code>## [1] 0.7960932</code></pre>
+<pre class="r"><code>#Bonferroni correction
+0.05/31</code></pre>
+<pre><code>## [1] 0.001612903</code></pre>
+<pre class="r"><code>#Assumptions
+diabetes1 &lt;- diabetes%&gt;%select(number.of.times.pregnant, plasma.glucose.concentration, diastolic.blood.pressure.mmHg., tricep.skin.fold.thickness.mm., serum.insulin.mu.U.mL., diabetes.pedigree.function, age.yrs., categoricalBMI)
+
+ggplot(diabetes1, aes(x = serum.insulin.mu.U.mL., y = diastolic.blood.pressure.mmHg.)) +
+ geom_point(alpha = .5) + geom_density_2d(h=2) + coord_fixed() + facet_wrap(~categoricalBMI)</code></pre>
+<pre><code>## Warning: stat_contour(): Zero contours were generated</code></pre>
+<pre><code>## Warning in min(x): no non-missing arguments to min; returning Inf</code></pre>
+<pre><code>## Warning in max(x): no non-missing arguments to max; returning -Inf</code></pre>
+<pre><code>## Warning: stat_contour(): Zero contours were generated</code></pre>
+<pre><code>## Warning in min(x): no non-missing arguments to min; returning Inf</code></pre>
+<pre><code>## Warning in max(x): no non-missing arguments to max; returning -Inf</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<pre class="r"><code>covmats&lt;-diabetes1%&gt;%group_by(categoricalBMI)%&gt;%do(covs=cov(.[2:5]))
+for(i in 1:5){print(covmats$covs[i])}</code></pre>
+<pre><code>## [[1]]
+##                                plasma.glucose.concentration
+## plasma.glucose.concentration                      309.55238
+## diastolic.blood.pressure.mmHg.                    306.38095
+## tricep.skin.fold.thickness.mm.                     14.90476
+## serum.insulin.mu.U.mL.                             74.05714
+##                                diastolic.blood.pressure.mmHg.
+## plasma.glucose.concentration                         306.3810
+## diastolic.blood.pressure.mmHg.                      1532.5238
+## tricep.skin.fold.thickness.mm.                       163.5476
+## serum.insulin.mu.U.mL.                               297.2143
+##                                tricep.skin.fold.thickness.mm.
+## plasma.glucose.concentration                         14.90476
+## diastolic.blood.pressure.mmHg.                      163.54762
+## tricep.skin.fold.thickness.mm.                       86.95238
+## serum.insulin.mu.U.mL.                              192.35714
+##                                serum.insulin.mu.U.mL.
+## plasma.glucose.concentration                 74.05714
+## diastolic.blood.pressure.mmHg.              297.21429
+## tricep.skin.fold.thickness.mm.              192.35714
+## serum.insulin.mu.U.mL.                      906.82857
+## 
+## [[1]]
+##                                plasma.glucose.concentration
+## plasma.glucose.concentration                      759.97265
+## diastolic.blood.pressure.mmHg.                    126.98962
+## tricep.skin.fold.thickness.mm.                    -57.27362
+## serum.insulin.mu.U.mL.                            293.12461
+##                                diastolic.blood.pressure.mmHg.
+## plasma.glucose.concentration                       126.989616
+## diastolic.blood.pressure.mmHg.                     400.249221
+## tricep.skin.fold.thickness.mm.                       2.688474
+## serum.insulin.mu.U.mL.                              70.429907
+##                                tricep.skin.fold.thickness.mm.
+## plasma.glucose.concentration                       -57.273624
+## diastolic.blood.pressure.mmHg.                       2.688474
+## tricep.skin.fold.thickness.mm.                     102.980530
+## serum.insulin.mu.U.mL.                             299.224299
+##                                serum.insulin.mu.U.mL.
+## plasma.glucose.concentration                293.12461
+## diastolic.blood.pressure.mmHg.               70.42991
+## tricep.skin.fold.thickness.mm.              299.22430
+## serum.insulin.mu.U.mL.                     5194.26168
+## 
+## [[1]]
+##                                plasma.glucose.concentration
+## plasma.glucose.concentration                    1036.520357
+## diastolic.blood.pressure.mmHg.                    55.905564
+## tricep.skin.fold.thickness.mm.                     8.514685
+## serum.insulin.mu.U.mL.                          1266.018571
+##                                diastolic.blood.pressure.mmHg.
+## plasma.glucose.concentration                         55.90556
+## diastolic.blood.pressure.mmHg.                      319.70024
+## tricep.skin.fold.thickness.mm.                       50.35773
+## serum.insulin.mu.U.mL.                              128.20880
+##                                tricep.skin.fold.thickness.mm.
+## plasma.glucose.concentration                         8.514685
+## diastolic.blood.pressure.mmHg.                      50.357733
+## tricep.skin.fold.thickness.mm.                     257.767779
+## serum.insulin.mu.U.mL.                             800.028215
+##                                serum.insulin.mu.U.mL.
+## plasma.glucose.concentration                1266.0186
+## diastolic.blood.pressure.mmHg.               128.2088
+## tricep.skin.fold.thickness.mm.               800.0282
+## serum.insulin.mu.U.mL.                     14533.7978
+## 
+## [[1]]
+## NULL
+## 
+## [[1]]
+## NULL</code></pre>
+<p>I performed 1 manova, 6 anova, and 24 t-tests,so we performed 31 tests total. The manova test was significant and showed that some of my numeric variables show a mean difference across one or more of the categories in the categoricalBMI variable. We then performed 6 univariate anova tests to find that 'Serum insulin level,' 'tricep skin fold thickness,' 'diastolic blood pressure,' and 'plasma glucose concentration' are all significant and show mean difference across categorical BMI groups. We calculated the bonferroni correction to be .001612 and the chance of at least one type one error to be .7961. Assumptions are likely met because the matrices dont show homogeneity of (co)variances.</p>
+</div>
+<div id="part-2" class="section level1">
+<h1>PART 2</h1>
+<pre class="r"><code>#PERMANOVA (randimization-test MANOVA)
+dists&lt;-diabetes%&gt;%select(number.of.times.pregnant, plasma.glucose.concentration, diastolic.blood.pressure.mmHg., tricep.skin.fold.thickness.mm., serum.insulin.mu.U.mL., diabetes.pedigree.function, age.yrs.)%&gt;%dist()
+
+adonis(dists~categoricalBMI, data=diabetes)</code></pre>
+<pre><code>## 
+## Call:
+## adonis(formula = dists ~ categoricalBMI, data = diabetes) 
+## 
+## Permutation: free
+## Number of permutations: 999
+## 
+## Terms added sequentially (first to last)
+## 
+##                 Df SumsOfSqs MeanSqs F.Model      R2 Pr(&gt;F)    
+## categoricalBMI   2    324043  162021  11.023 0.02801  0.001 ***
+## Residuals      765  11244094   14698         0.97199           
+## Total          767  11568136                 1.00000           
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>#Permanova by hand (done in order to graph)
+SST&lt;- sum(dists^2)/150
+SSW&lt;-diabetes%&gt;%group_by(categoricalBMI)%&gt;%select(number.of.times.pregnant, plasma.glucose.concentration, diastolic.blood.pressure.mmHg., tricep.skin.fold.thickness.mm., serum.insulin.mu.U.mL., diabetes.pedigree.function, age.yrs., categoricalBMI)%&gt;% do(d=dist(.[2:3],&quot;euclidean&quot;))%&gt;%ungroup()%&gt;% summarize(sum(d[[1]]^2)/50 + sum(d[[2]]^2)/50+ sum(d[[3]]^2)/50)%&gt;%pull
+F_obs&lt;-((SST-SSW)/2)/(SSW/147)
+
+Fs&lt;-replicate(1000,{
+new&lt;-diabetes%&gt;%mutate(categoricalBMI=sample(categoricalBMI)) #permute the categoricalBMI vector
+SSW&lt;-new%&gt;%group_by(categoricalBMI)%&gt;%select(number.of.times.pregnant, plasma.glucose.concentration, diastolic.blood.pressure.mmHg., tricep.skin.fold.thickness.mm., serum.insulin.mu.U.mL., diabetes.pedigree.function, age.yrs., categoricalBMI)%&gt;%
+do(d=dist(.[2:3],&quot;euclidean&quot;))%&gt;%ungroup()%&gt;%
+summarize(sum(d[[1]]^2)/50 + sum(d[[2]]^2)/50+ sum(d[[3]]^2)/50)%&gt;%pull
+((SST-SSW)/2)/(SSW/147) #calculate new F ratio on randomized data
+})
+
+#histogram of null distribution and p-value
+{hist(Fs,prob = T); abline(v=F_obs, col=&quot;red&quot;, add=T)}</code></pre>
+<pre><code>## Warning in int_abline(a = a, b = b, h = h, v = v, untf = untf, ...): &quot;add&quot; is
+## not a graphical parameter</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<pre class="r"><code>#p-value
+mean(Fs&gt;F_obs)</code></pre>
+<pre><code>## [1] 0.044</code></pre>
+<p>The null hypothesis for my permanova test is: The group means for the number.of.times.pregnant, plasma.glucose.concentration, diastolic.blood.pressure.mmHg., tricep.skin.fold.thickness.mm., serum.insulin.mu.U.mL., diabetes.pedigree.function, and age.yrs. variables are equal across the different the categorical BMI groups.</p>
+<p>The alternative hypothesis for my permanova test is: The group means for at least any one of these variables: number.of.times.pregnant, plasma.glucose.concentration, diastolic.blood.pressure.mmHg., tricep.skin.fold.thickness.mm., serum.insulin.mu.U.mL., diabetes.pedigree.function, and age.yrs. variables are different across the different categorical BMI groups.</p>
+<p>Interpretation: Because our p-value (.042) is less then alpha (.05) we reject the null hypothesis. There is a difference in mean values in at least one of the variables across the different categorical BMI groups.</p>
+</div>
+<div id="part-3" class="section level1">
+<h1>PART 3</h1>
+<pre class="r"><code>#Predicting diastolic blood pressure from diabetes diagnosis and plasma glucose concentration 
+
+#Dummy coding diagnosis
+diabetes2 &lt;- diabetes %&gt;% mutate(diagnosis=ifelse(diabetes$diagnosis==&quot;tested_positive&quot;, 1,0))
+
+#Rename to make easier
+diabetes2 &lt;-diabetes2 %&gt;% mutate(BP = diastolic.blood.pressure.mmHg., na.rm=T)
+#Mean Center
+diabetes2 &lt;-diabetes2 %&gt;% mutate(centeredGlucose = plasma.glucose.concentration - mean(plasma.glucose.concentration, na.rm=T))
+
+#Linear Regression
+fit &lt;- lm(BP~diagnosis+centeredGlucose+diagnosis*centeredGlucose, data=diabetes2)
+summary(fit)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = BP ~ diagnosis + centeredGlucose + diagnosis * centeredGlucose, 
+##     data = diabetes2)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -72.754  -5.585   2.349  10.275  55.678 
+## 
+## Coefficients:
+##                           Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)               69.63801    0.92709  75.115  &lt; 2e-16 ***
+## diagnosis                  0.24531    1.66779   0.147   0.8831    
+## centeredGlucose            0.13322    0.03275   4.067 5.25e-05 ***
+## diagnosis:centeredGlucose -0.08699    0.04915  -1.770   0.0772 .  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 19.13 on 764 degrees of freedom
+## Multiple R-squared:  0.02732,    Adjusted R-squared:  0.0235 
+## F-statistic: 7.153 on 3 and 764 DF,  p-value: 9.677e-05</code></pre>
+<pre class="r"><code>#Regression plot
+ggplot(diabetes2, aes(x=centeredGlucose, y=BP,group=diagnosis))+geom_point(aes(color=diagnosis))+geom_smooth(method=&quot;lm&quot;,formula=y~1,se=F,fullrange=T,aes(color=diagnosis))+
+theme(legend.position=c(.1,.1))+xlab(&quot;Centered Glucose&quot;)+ ylab(&quot;diastolic BP&quot;)</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<pre class="r"><code>#Linearity, Homoskedsaticity (Assumption)
+resids&lt;-fit$residuals
+fitvals&lt;-fit$fitted.values
+ggplot()+geom_point(aes(fitvals,resids))+geom_hline(yintercept=0, color=&#39;red&#39;)</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-5-2.png" width="672" /></p>
+<pre class="r"><code>#Normality (Assumption)
+ggplot()+geom_histogram(aes(resids), bins=20)</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-5-3.png" width="672" /></p>
+<pre class="r"><code>                        ggplot()+geom_qq(aes(sample=resids))+geom_qq_line(aes(sample=resids, color=&#39;red&#39;))</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-5-4.png" width="672" /></p>
+<pre class="r"><code>#Robust Standard Errors
+bptest(fit)</code></pre>
+<pre><code>## 
+##  studentized Breusch-Pagan test
+## 
+## data:  fit
+## BP = 5.527, df = 3, p-value = 0.137</code></pre>
+<pre class="r"><code>  #uncorrected SEs
+summary(fit)$coef[,1:2]</code></pre>
+<pre><code>##                             Estimate Std. Error
+## (Intercept)               69.6380055 0.92708839
+## diagnosis                  0.2453103 1.66778726
+## centeredGlucose            0.1332174 0.03275455
+## diagnosis:centeredGlucose -0.0869907 0.04915292</code></pre>
+<pre class="r"><code>  #Corrected SEs
+coeftest(fit, vcov = vcovHC(fit))[,1:2]</code></pre>
+<pre><code>##                             Estimate Std. Error
+## (Intercept)               69.6380055 0.79098887
+## diagnosis                  0.2453103 1.70134552
+## centeredGlucose            0.1332174 0.02769900
+## diagnosis:centeredGlucose -0.0869907 0.04287598</code></pre>
+<p>Linear Regression coefficent interpretation: For Pima Indian women the average diastolic blood pressure is 69.638 mmHg for women who tested negative for diabetes and have average glucose plasma levels. Controlling for their glucose levels, there is a difference of .24531 mmHg in the diastolic BP of women with and without diabetes. When controlling for diabetes diagnosis, for every 1 increase in glucose plasma levels, diastolic blood pressure increases by .13322. There is no significant interaction between diabetes status and centered glucose level.</p>
+<p>Due to the fanning pattern on our Residual-Fitted.value plot, it looks like the assumption for linearity &amp; homoskedsaticity are not met. The other plots show that normality looks good for the most part but is not met due to some extreme outliers.</p>
+<p>After correcting the standard errors, the error for the intercept, centered glucose plasma level, and interaction between diagnosis and centered glucose level all decreased. However, the error for the diabetes diagnosis increased. My model explains 2.35% (adjusted r^2 value from regression) of the variation betweem the corrected and uncorrected SEs.</p>
+</div>
+<div id="part-4" class="section level1">
+<h1>PART 4</h1>
+<pre class="r"><code>boot_dat&lt;- sample_frac(diabetes2, replace=T)
+
+samp_distn&lt;-replicate(5000, {
+boot_dat &lt;- sample_frac(diabetes2, replace=T) 
+fit &lt;- lm(BP~diagnosis+centeredGlucose+diagnosis*centeredGlucose, data=boot_dat) 
+coef(fit) 
+})
+
+#Estimated SEs 
+samp_distn %&gt;% t %&gt;% as.data.frame %&gt;% summarize_all(sd)</code></pre>
+<pre><code>##   (Intercept) diagnosis centeredGlucose diagnosis:centeredGlucose
+## 1   0.7772015  1.689739      0.02735034                0.04263956</code></pre>
+<p>The bootstrapped SEs are roughly equivalent to the corrected SEs. For all of the bootstrapped SEs except for the diagnosis, they are less than the uncorrected SEs. For areas where the SE decreases, the t-value will increase and the p-value will decrease. Opposite for increasing.</p>
+</div>
+<div id="part-5" class="section level1">
+<h1>PART 5</h1>
+<pre class="r"><code>#Binary regression
+binaryfit&lt;-glm(diagnosis~age.yrs.+BMI.kg.m.2.+BP, data=diabetes2, family=&quot;binomial&quot;)
+coeftest(binaryfit)</code></pre>
+<pre><code>## 
+## z test of coefficients:
+## 
+##               Estimate Std. Error z value  Pr(&gt;|z|)    
+## (Intercept) -5.0706732  0.5383276 -9.4193 &lt; 2.2e-16 ***
+## age.yrs.     0.0490728  0.0072130  6.8034 1.022e-11 ***
+## BMI.kg.m.2.  0.1038885  0.0129422  8.0271 9.979e-16 ***
+## BP          -0.0091201  0.0046950 -1.9425   0.05208 .  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>exp(coef(binaryfit))%&gt;%data.frame()</code></pre>
+<pre><code>##                       .
+## (Intercept) 0.006278192
+## age.yrs.    1.050296832
+## BMI.kg.m.2. 1.109476793
+## BP          0.990921407</code></pre>
+<pre class="r"><code>#Confusion Matrix
+prob &lt;- predict(binaryfit, type=&quot;response&quot;)
+table(truth=diabetes2$diagnosis, prediction=as.numeric(prob&gt;.5))%&gt;%addmargins</code></pre>
+<pre><code>##      prediction
+## truth   0   1 Sum
+##   0   427  73 500
+##   1   178  90 268
+##   Sum 605 163 768</code></pre>
+<pre class="r"><code>(427+90)/768 #accuracy</code></pre>
+<pre><code>## [1] 0.6731771</code></pre>
+<pre class="r"><code>90/268 #Sensitivity </code></pre>
+<pre><code>## [1] 0.3358209</code></pre>
+<pre class="r"><code>427/500 #Specificity</code></pre>
+<pre><code>## [1] 0.854</code></pre>
+<pre class="r"><code>90/163 #Precision </code></pre>
+<pre><code>## [1] 0.5521472</code></pre>
+<pre class="r"><code>#Density Plot
+diabetes2$logit&lt;-predict(binaryfit)
+
+
+ggplot(diabetes2, aes(x=logit, group=diagnosis, fill=diagnosis))+geom_density(alpha=0.3) + geom_vline(xintercept=0, lty=2) #diagnosis=1=positive for diabetes, 0=negative</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<pre class="r"><code>#ROC Plot and AUC&#39;
+
+diabetes2 &lt;- diabetes2%&gt;%mutate(prediction=ifelse(prob&gt;.5,1,0))
+
+classify&lt;-diabetes2%&gt;%transmute(prob,prediction,truth=diagnosis)
+
+ROCplot&lt;-ggplot(classify)+geom_roc(aes(d=truth,m=prob), n.cuts=0)
+ROCplot</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-7-2.png" width="672" /></p>
+<pre class="r"><code>calc_auc(ROCplot)</code></pre>
+<pre><code>##   PANEL group       AUC
+## 1     1    -1 0.7381567</code></pre>
+<p>Coefficient estimate interpretation: The odds of having diabetes at age 0, 0 BMI, and 0 BP is .006278. Holding other variables constant, an increase in age by 1 multiplies the odds of having diabetes by 1.0502968. Doing the same for BMI multiplies the odds by 1.10947. Lastly, an increase in diastolic blood pressure by 1 multiplies the odds of having diabetes by .99. This model is 67.3% accurate. It is able to predict 33.58% (sensitivity) out of total positive cases. It is able to predict 85.4% of the negatives. (Precision) 55.2% of the predicted positives are truly positive.</p>
+<p>Our calculated AUC was .7381567 which is considered fair. AUC summarizes the sensitivity and specificity into a single value. So our model is a fair predictor of diabetes diagnosis.</p>
+</div>
+<div id="part-6" class="section level1">
+<h1>PART 6</h1>
+<pre class="r"><code>binaryfit2&lt;-glm(diagnosis~age.yrs.+BMI.kg.m.2.+BP+number.of.times.pregnant+plasma.glucose.concentration+tricep.skin.fold.thickness.mm.+serum.insulin.mu.U.mL.+diabetes.pedigree.function, data=diabetes2, family=&quot;binomial&quot;)
+coeftest(binaryfit2)</code></pre>
+<pre><code>## 
+## z test of coefficients:
+## 
+##                                   Estimate  Std. Error  z value  Pr(&gt;|z|)    
+## (Intercept)                    -8.40469637  0.71663588 -11.7280 &lt; 2.2e-16 ***
+## age.yrs.                        0.01486900  0.00933479   1.5929  0.111192    
+## BMI.kg.m.2.                     0.08970097  0.01508763   5.9453 2.759e-09 ***
+## BP                             -0.01329555  0.00523361  -2.5404  0.011072 *  
+## number.of.times.pregnant        0.12318230  0.03207755   3.8401  0.000123 ***
+## plasma.glucose.concentration    0.03516371  0.00370871   9.4814 &lt; 2.2e-16 ***
+## tricep.skin.fold.thickness.mm.  0.00061896  0.00689938   0.0897  0.928515    
+## serum.insulin.mu.U.mL.         -0.00119170  0.00090123  -1.3223  0.186065    
+## diabetes.pedigree.function      0.94517974  0.29914746   3.1596  0.001580 ** 
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>exp(coef(binaryfit2))%&gt;%data.frame()</code></pre>
+<pre><code>##                                           .
+## (Intercept)                    0.0002238137
+## age.yrs.                       1.0149800983
+## BMI.kg.m.2.                    1.0938471417
+## BP                             0.9867924485
+## number.of.times.pregnant       1.1310905981
+## plasma.glucose.concentration   1.0357892688
+## tricep.skin.fold.thickness.mm. 1.0006191560
+## serum.insulin.mu.U.mL.         0.9988090108
+## diabetes.pedigree.function     2.5732758592</code></pre>
+<pre class="r"><code>#Confusion Matrix
+prob1 &lt;- predict(binaryfit2, type=&quot;response&quot;)
+table(truth=diabetes2$diagnosis, prediction=as.numeric(prob&gt;.5))%&gt;%addmargins</code></pre>
+<pre><code>##      prediction
+## truth   0   1 Sum
+##   0   427  73 500
+##   1   178  90 268
+##   Sum 605 163 768</code></pre>
+<pre class="r"><code>(445+156)/768 #accuracy</code></pre>
+<pre><code>## [1] 0.7825521</code></pre>
+<pre class="r"><code>156/268 #Sensitivity</code></pre>
+<pre><code>## [1] 0.5820896</code></pre>
+<pre class="r"><code>445/500 #Specificity </code></pre>
+<pre><code>## [1] 0.89</code></pre>
+<pre class="r"><code>156/211 #Precision </code></pre>
+<pre><code>## [1] 0.7393365</code></pre>
+<pre class="r"><code>#AUC
+diabetes2 &lt;- diabetes2%&gt;%mutate(prediction=ifelse(prob1&gt;.5,1,0))
+
+classify&lt;-diabetes2%&gt;%transmute(prob,prediction,truth=diagnosis)
+
+ROCplot1&lt;-ggplot(classify)+geom_roc(aes(d=truth,m=prob), n.cuts=0)
+ROCplot1</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<pre class="r"><code>calc_auc(ROCplot1)</code></pre>
+<pre><code>##   PANEL group       AUC
+## 1     1    -1 0.7381567</code></pre>
+<pre class="r"><code>#10-fold CV
+set.seed(1234)
+k=10
+
+data&lt;-diabetes2[sample(nrow(diabetes2)),]
+folds&lt;-cut(seq(1:nrow(diabetes2)),breaks=k,labels=F)
+
+diags&lt;-NULL
+for(i in 1:k){
+ train&lt;-data[folds!=i,]
+ test&lt;-data[folds==i,]
+ truth&lt;-test$diagnosis
+ train_fit&lt;-glm(diagnosis~age.yrs.+BMI.kg.m.2.+BP+number.of.times.pregnant+plasma.glucose.concentration+tricep.skin.fold.thickness.mm.+serum.insulin.mu.U.mL.+diabetes.pedigree.function, data=train, family=&quot;binomial&quot;)
+ probs&lt;-predict(train_fit,newdata = test,type=&quot;response&quot;)
+ diags&lt;-rbind(diags,class_diag(probs,truth))
+}
+
+apply(diags, 2, mean, na.rm = TRUE)</code></pre>
+<pre><code>##       acc      sens      spec       ppv       auc 
+## 0.7774436 0.5754945 0.8858451 0.7344179 0.8347183</code></pre>
+<pre class="r"><code>#Lasso
+Lassofit&lt;-glm(diagnosis~ -1 + age.yrs.+BMI.kg.m.2.+BP+number.of.times.pregnant+plasma.glucose.concentration+tricep.skin.fold.thickness.mm.+serum.insulin.mu.U.mL.+diabetes.pedigree.function, data=diabetes2, family=&quot;binomial&quot;)
+
+y&lt;-as.matrix(diabetes2$diagnosis)
+x&lt;-model.matrix(Lassofit)
+x&lt;-scale(x)
+cv&lt;-cv.glmnet(x,y, family=&#39;binomial&#39;)
+lasso&lt;-glmnet(x,y,family=&quot;binomial&quot;,lambda=cv$lambda.1se)
+coef(cv)</code></pre>
+<pre><code>## 9 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
+##                                          1
+## (Intercept)                    -0.73321993
+## age.yrs.                        0.02198557
+## BMI.kg.m.2.                     0.30710027
+## BP                              .         
+## number.of.times.pregnant        0.18256416
+## plasma.glucose.concentration    0.78622003
+## tricep.skin.fold.thickness.mm.  .         
+## serum.insulin.mu.U.mL.          .         
+## diabetes.pedigree.function      0.03770204</code></pre>
+<pre class="r"><code>prob2 &lt;- predict(Lassofit, type=&quot;response&quot;)
+
+class_diag(prob2, diabetes2$diagnosis)</code></pre>
+<pre><code>##         acc      sens  spec       ppv       auc
+## 1 0.6979167 0.3880597 0.864 0.6046512 0.6864104</code></pre>
+<pre class="r"><code>#10-fold CV
+set.seed(1234)
+k=10
+
+data2&lt;-diabetes2[sample(nrow(diabetes2)),]
+folds2&lt;-cut(seq(1:nrow(diabetes2)),breaks=k,labels=F)
+
+diags2&lt;-NULL
+for(i in 1:k){
+ train2&lt;-data2[folds!=i,]
+ test2&lt;-data2[folds==i,]
+ truth2&lt;-test2$diagnosis
+ train_fit2&lt;-glm(diagnosis~ -1 + age.yrs.+BMI.kg.m.2.+BP+number.of.times.pregnant+plasma.glucose.concentration+tricep.skin.fold.thickness.mm.+serum.insulin.mu.U.mL.+diabetes.pedigree.function, data=train2, family=&quot;binomial&quot;)
+ probs2&lt;-predict(train_fit2,newdata = test2,type=&quot;response&quot;)
+ diags2&lt;-rbind(diags2,class_diag(probs2,truth2))
+}
+
+apply(diags2, 2, mean, na.rm = TRUE)</code></pre>
+<pre><code>##       acc      sens      spec       ppv       auc 
+## 0.6823821 0.3645959 0.8522165 0.5645910 0.6686242</code></pre>
+<p>Coeffecient interpretation: The odds of having diabetes with the rest of the variables being 0 is .00022. Holding all things constant, if age increases by 1 the odds of having diabetes increases by a factor of 1.015, if BMI increases by 1 the odds of having diabetes increases by a factor of 1.094, if BP increases by 1 the odds of having diabetes increases by a factor of .986, if number of times pregnant increases by 1 the odds of having diabetes increases by a factor of 1.13... etc. This model is 78.25% accurate. It is able to predict 58.2% (sensitivity) out of total positive cases. It is able to predict 89% of the negatives. (Precision) 73.9% of the predicted positives are truly positive.</p>
+<p>Our calculated AUC was .8394 (increased) which is considered good. AUC summarizes the sensitivity and specificity into a single value. So our model is a good predictor of diabetes diagnosis.</p>
+<p>The 10-fold reports were about equivalent to all of in-sample metrics.</p>
+<p>Lasso retained BP, tricep skin fold thickness, and serum insulin level.</p>
+<p>The AUC after Lasso was .686 and after the 10-folds it was .668. The less complex model leads to better fittings because of the slightly greater AUC.</p>
+</div>
+
+            
+        <hr>         <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div> 
+            </div>
+          </div>
+
+   <hr>  <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div> 
+        </div>
+      </div>
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="../../js/docs.min.js"></script>
+<script src="../../js/main.js"></script>
+
+<script src="../../js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>
