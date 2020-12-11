@@ -18,7 +18,7 @@ description: '
 '
 ---
 
-![](/2020-12-11-important-physician-traits/index_files/stethoscope-cartoon.png)
+![](/post/2020-12-11-important-physician-traits_files/stethoscope-cartoon.png)![](/2020-12-11-important-physician-traits/index_files/stethoscope-cartoon.png)
 
 
 Patient advocacy and cultural awareness are integral parts of medical training. Physicians are the caretakers of patients, and I strongly believe they should be their strongest advocates. Oftentimes physicians are criticized for not listening to their patients, being apathetic, and magisterial. Time after time, I hear these criticisms from friends and family about their terrible experiences with physicians, leaving them belittled rather than reassured. As a physician, I aspire to improve patient-physician interactions and advocate for a patient focused practice. 
@@ -31,8 +31,18 @@ Integration of cultural awareness and patient advocacy with medical education sh
 #Unreleated plug--> Check out my Project  [Link to project 1](/projects/project1/)
 
 [Link to google](https://www.google.com) 
+```{python}
+#random python code
+seven = 7 
+seven + 2
+
+```
+
+
 ```{r}
 library(emojifont)
 emoji(search_emoji('smile'))
 ```
+
+
 
