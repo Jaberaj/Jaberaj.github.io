@@ -1,8 +1,18 @@
 ---
 title: "Project 1, SDS348 Fall 2020"
 author: "Adnan Jaber, amj3496"
-date: "October 18, 2020"
+date: "2020-10-18"
 output: html_document
+---
+---
+title: SDS348, Project 1
+author: Adnan Jaber
+date: '2020-10-18'
+slug: Project-1
+categories: [Wrangling]
+tags: []
+description: '
+'
 ---
 
 ```{r setup, include=FALSE}

@@ -7,7 +7,7 @@
     <meta name="author" content="Adnan Jaber" />
     
     <link rel="shortcut icon" type="image/x-icon" href="../../img/favicon.ico">
-    <title>SDS348 Project 2</title>
+    <title>Project 2, SDS348 Fall 2020</title>
     <meta name="generator" content="Hugo 0.79.0" />
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="../../css/main.css" />
@@ -54,13 +54,13 @@
       <div class="container">
         <div class="blog-post">
           <h3>
-            <strong><a href="../../project/project2/">SDS348 Project 2</a></strong>
+            <strong><a href="../../project/project2/">Project 2, SDS348 Fall 2020</a></strong>
           </h3>
         </div>
  
 <div class="blog-title">
           <h4>
-         January 1, 0001 
+         November 22, 2020 
             &nbsp;&nbsp;
             
           </h4>
@@ -358,7 +358,7 @@ summarize(sum(d[[1]]^2)/50 + sum(d[[2]]^2)/50+ sum(d[[3]]^2)/50)%&gt;%pull
 <p><img src="../../project/project2_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
 <pre class="r"><code>#p-value
 mean(Fs&gt;F_obs)</code></pre>
-<pre><code>## [1] 0.044</code></pre>
+<pre><code>## [1] 0.049</code></pre>
 <p>The null hypothesis for my permanova test is: The group means for the number.of.times.pregnant, plasma.glucose.concentration, diastolic.blood.pressure.mmHg., tricep.skin.fold.thickness.mm., serum.insulin.mu.U.mL., diabetes.pedigree.function, and age.yrs. variables are equal across the different the categorical BMI groups.</p>
 <p>The alternative hypothesis for my permanova test is: The group means for at least any one of these variables: number.of.times.pregnant, plasma.glucose.concentration, diastolic.blood.pressure.mmHg., tricep.skin.fold.thickness.mm., serum.insulin.mu.U.mL., diabetes.pedigree.function, and age.yrs. variables are different across the different categorical BMI groups.</p>
 <p>Interpretation: Because our p-value (.042) is less then alpha (.05) we reject the null hypothesis. There is a difference in mean values in at least one of the variables across the different categorical BMI groups.</p>
@@ -451,7 +451,7 @@ coef(fit)
 #Estimated SEs 
 samp_distn %&gt;% t %&gt;% as.data.frame %&gt;% summarize_all(sd)</code></pre>
 <pre><code>##   (Intercept) diagnosis centeredGlucose diagnosis:centeredGlucose
-## 1   0.7772015  1.689739      0.02735034                0.04263956</code></pre>
+## 1   0.7982103  1.693185      0.02746316                0.04294078</code></pre>
 <p>The bootstrapped SEs are roughly equivalent to the corrected SEs. For all of the bootstrapped SEs except for the diagnosis, they are less than the uncorrected SEs. For areas where the SE decreases, the t-value will increase and the p-value will decrease. Opposite for increasing.</p>
 </div>
 <div id="part-5" class="section level1">

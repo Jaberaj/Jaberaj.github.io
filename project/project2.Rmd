@@ -1,7 +1,7 @@
 ---
-title: "SDS348 Project 2"
+title: "Project 2, SDS348 Fall 2020"
 author: "Adnan Jaber (amj3496)"
-date: "November 22, 2020"
+date: "2020-11-22"
 output: html_document
 ---
 
